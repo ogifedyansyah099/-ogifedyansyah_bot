@@ -396,7 +396,7 @@ async def run_webhook_server():
     logger.info(f"📡 Webhook server aktif di port {PORT}")
     logger.info(f"🔗 Endpoint: /signal?secret={WEBHOOK_SECRET}")
 
-def main():
+async def main():
     global _bot
 
     logger.info(f"🤖 {BOT_NAME} Trading Bot mulai...")
@@ -418,11 +418,17 @@ def main():
     ))
 
     # Jalankan webhook server di background
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run_webhook_server())
+    await run_webhook_server()
 
-    logger.info("✅ Bot aktif! Tekan Ctrl+C untuk berhenti.\n")
-    ptb_app.run_polling(allowed_updates=Update.ALL_TYPES)
+    logger.info("✅ Bot aktif!\n")
+
+    # Jalankan bot polling
+    async with ptb_app:
+        await ptb_app.start()
+        await ptb_app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+        logger.info("✅ Polling aktif!")
+        # Jaga agar bot tetap jalan
+        await asyncio.Event().wait()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
